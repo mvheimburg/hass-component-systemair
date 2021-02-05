@@ -1,0 +1,1 @@
+# hass_component_systemair
