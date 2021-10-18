@@ -1,1 +1,1 @@
-"""The flexit component."""
+"""The systemair component."""

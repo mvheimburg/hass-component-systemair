@@ -1,8 +1,11 @@
 """Platform for newer SystemAir AC units with Modbus adapter."""
 import logging
 from typing import List
-
+import asyncio
 import voluptuous as vol
+
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 from homeassistant.components.climate import PLATFORM_SCHEMA, ClimateEntity
 from homeassistant.components.climate.const import (
@@ -11,7 +14,21 @@ from homeassistant.components.climate.const import (
     SUPPORT_TARGET_TEMPERATURE,
     SUPPORT_TARGET_HUMIDITY,
 )
-from homeassistant.components.modbus.const import CONF_HUB, DEFAULT_HUB, MODBUS_DOMAIN
+
+from homeassistant.components.modbus.modbus import ModbusHub
+
+from homeassistant.components.modbus.const import (
+    CONF_HUB, 
+    DEFAULT_HUB, 
+    MODBUS_DOMAIN,
+    CALL_TYPE_REGISTER_HOLDING,
+    CALL_TYPE_REGISTER_INPUT,
+    CALL_TYPE_WRITE_REGISTER
+)
+
+from homeassistant.components.modbus import get_hub
+from homeassistant.components.modbus.base_platform import BasePlatform
+
 from homeassistant.const import (
     ATTR_TEMPERATURE,
     CONF_NAME,
@@ -36,12 +53,31 @@ _LOGGER = logging.getLogger(__name__)
 SUPPORT_FLAGS = SUPPORT_TARGET_TEMPERATURE | SUPPORT_FAN_MODE | SUPPORT_TARGET_HUMIDITY
 
 
-def setup_platform(hass, config, add_entities, discovery_info=None):
-    """Set up the Flexit Platform."""
-    modbus_slave = config.get(CONF_SLAVE)
-    name = config.get(CONF_NAME)
-    hub = hass.data[MODBUS_DOMAIN][config.get(CONF_HUB)]
-    add_entities([SystemAir(hub, modbus_slave, name)], True)
+
+
+async def async_setup_platform(
+    hass: HomeAssistant,
+    config: ConfigType,
+    async_add_entities,
+    discovery_info: DiscoveryInfoType = None,
+):
+    """Set up the SystemAir Platform."""
+    # modbus_slave = config.get(CONF_SLAVE)
+
+    # if discovery_info is None:  # pragma: no cover
+    #     return
+
+    # name = config.get(CONF_NAME)
+    # hub = hass.data[MODBUS_DOMAIN][config.get(CONF_HUB)]
+    # hub = hass.data[MODBUS_DOMAIN][config.get(CONF_HUB)]
+    hub = get_hub(hass, config[CONF_HUB])
+    # async_add_entities([SystemAir(hub, modbus_slave, name)], True)
+    async_add_entities([SystemAir(hub, config)], True)
+    
+
+# async def async_setup_entry(hass, config_entry, async_add_entities):
+#     """Set up the Demo SystemAir entry."""
+#     await async_setup_platform(hass, {}, async_add_entities)
 
 
 class SystemAir(ClimateEntity):
@@ -59,110 +95,107 @@ class SystemAir(ClimateEntity):
         Modbus client (pymodbus.client) used to communicate with the unit.
     """
 
-    def __init__(self, hub, modbus_slave, name):
+    def __init__(
+        self, 
+        hub: ModbusHub, 
+        # modbus_slave, 
+        config):
         """Initialize the unit."""
+
+
         self._hub = hub
-        self._name = name
-        self._slave = modbus_slave
+        self._name = config.get(CONF_NAME)
+        self._slave = config.get(CONF_SLAVE)
 
         self._fan_modes = ["Off", "Low", "Normal", "High"]
 
         self._input_regs = REGMAP_INPUT
         self._holding_regs = REGMAP_HOLDING
+
         self._current_operation = None
-        self._setpoint_temp_max = None
-        self._setpoint_temp_min = None
-        self._current_humidity = None
-        self._setpoint_humidity = None
-        self._supply_temp = None
-        self._extract_temp = None
-        self._outdoor_temp = None
+        # self._setpoint_temp_max = None
+        # self._setpoint_temp_min = None
+        # self._current_humidity = None
+        # self._setpoint_humidity = None
+        # self._supply_temp = None
+        # self._extract_temp = None
+        # self._outdoor_temp = None
         self._user_mode = None
-        self._heater = None
-        self._heater_state = None
-        self._filter_warning = None
-        self._filter_hours = None
-        self._thermal_exchange_heat_enabled = None
-        self._thermal_exchange_heat_state = None
-        self._thermal_exchange_cold_enabled = None
-        self._thermal_exchange_cold_state = None
-        self._fan_speed_supply = None
-        self._fan_speed_extract = None
-        # self._update_on_read = update_on_read
-        self._fan_can_turn_off = None
+        # self._heater = None
+        # self._heater_state = None
+        # self._filter_warning = None
+        # self._filter_hours = None
+        # self._thermal_exchange_heat_enabled = None
+        # self._thermal_exchange_heat_state = None
+        # self._thermal_exchange_cold_enabled = None
+        # self._thermal_exchange_cold_state = None
+        # self._fan_speed_supply = None
+        # self._fan_speed_extract = None
+
+        # self._update_on_read = UPDATE_ON_READ
+        # self._fan_can_turn_off = None
+
         _LOGGER.warning("SAVE VTR COMPONENT SETUP")
+        # self.min_humidity = 20
+        # self.max_humidity = 50
 
     @property
     def supported_features(self):
         """Return the list of supported features."""
         return SUPPORT_FLAGS
 
-    def update(self):
+
+
+    async def async_update(self):
         """
         Updates all of the input and holding regs dict values.
         """
         ret = True
         try:
             for k in self._input_regs:
-                self._input_regs[k]["value"] = self._hub.read_input_registers(
-                    unit=self._slave, address=self._input_regs[k]["addr"], count=1
-                ).registers
+                await self.async_update_from_register("input", k)
+                # self._input_regs[k]["value"] = self._hub.read_input_registers(
+                #     unit=self._slave, address=self._input_regs[k]["addr"], value=1
+                # ).registers
             for k in self._holding_regs:
-                self._holding_regs[k]["value"] = self._hub.read_holding_registers(
-                    unit=self._slave, address=self._holding_regs[k]["addr"], count=1
-                ).registers
+                await self.async_update_from_register("holding", k)
+                # self._holding_regs[k]["value"] = self._hub.read_holding_registers(
+                #     unit=self._slave, address=self._holding_regs[k]["addr"], value=1
+                # ).registers
         except AttributeError:
             # The unit does not reply reliably
             ret = False
             print("Modbus read failed")
 
-        # self._target_temperature_max = (
-        #     self._holding_regs["REG_TC_CASCADE_SP_MAX"]["value"][0] / 10.0
-        # )
-        # self._target_temperature_min = (
-        #     self._holding_regs["REG_TC_CASCADE_SP_MIN"]["value"][0] / 10.0
-        # )
-        # self._current_humidity = self._holding_regs["REG_SENSOR_RHS_PDM"]["value"][0]
-        # self._setpoint_humidity = self._holding_regs[
-        #     "REG_ROTOR_RH_TRANSFER_CTRL_SETPOINT"
-        # ]["value"][0]
-        # self._supply_temp = self._holding_regs["REG_SENSOR_SAT"]["value"][0] / 10.0
-        # self._extract_temp = (
-        #     self._holding_regs["REG_SENSOR_PDM_EAT_VALUE"]["value"][0] / 10.0
-        # )
-        # self._outdoor_temp = (
-        #     self.get_twos_comp(self._holding_regs["REG_SENSOR_OAT"]["value"][0]) / 10.0
-        # )
-        # self._user_mode = self.get_user_mode_switch(
-        #     self._input_regs["REG_USERMODE_MODE"]["value"][0]
-        # )
-        # self._filter_warning = bool(
-        #     self._input_regs["REG_FILTER_ALARM_WAS_DETECTED"]["value"][0]
-        # )
-        # self._filter_remaining_hours = (
-        #     self._input_regs["REG_FILTER_REMAINING_TIME_L"]["value"][0] / 60 / 60
-        # )
-        # self._heater = bool(self._input_regs["REG_OUTPUT_Y1_DIGITAL"]["value"][0])
-        # self._heater_state = self._input_regs["REG_OUTPUT_Y1_ANALOG"]["value"][0]
-        # self._heat_exchanger = bool(
-        #     self._input_regs["REG_OUTPUT_Y2_DIGITAL"]["value"][0]
-        # )
-        # self._heat_exchanger_state = self._input_regs["REG_OUTPUT_Y2_ANALOG"]["value"][
-        #     0
-        # ]
-        # self._cooler = bool(self._input_regs["REG_OUTPUT_Y3_DIGITAL"]["value"][0])
-        # self._cooler_state = self._input_regs["REG_OUTPUT_Y3_ANALOG"]["value"][0]
-        # self._fan_speed_supply = self._holding_regs[
-        #     "REG_USERMODE_MANUAL_AIRFLOW_LEVEL_SAF"
-        # ]["value"][0]
-        # self._fan_speed_extract = self._holding_regs[
-        #     "REG_USERMODE_MANUAL_AIRFLOW_LEVEL_EAF"
-        # ]["value"][0]
-        # self._fan_can_turn_off = self._holding_regs[
-        #     "REG_ROTOR_RH_TRANSFER_CTRL_SETPOINT"
-        # ]["value"][0]
 
-        return ret
+    async def async_update_from_register(self, reg_type, variable):
+        """
+        Updates all of the input and holding regs dict values.
+        """
+        try:
+            if reg_type == "input":
+                result = await self._hub.async_pymodbus_call(
+                    unit=self._slave, address=self._input_regs[variable]["addr"], value=1, use_call=CALL_TYPE_REGISTER_INPUT)
+                if result is None:
+                    _LOGGER.warning(f"Error reading {variable} value from SystemAir modbus adapter")
+                else:
+                    self._input_regs[variable]["value"] = result.registers[0]
+
+
+            elif reg_type == "holding":
+                result = await self._hub.async_pymodbus_call(
+                    unit=self._slave, address=self._holding_regs[variable]["addr"], value=1, use_call=CALL_TYPE_REGISTER_HOLDING)
+                if result is None:
+                    _LOGGER.warning(f"Error reading {variable} value from SystemAir modbus adapter")
+                else:
+                    self._holding_regs[variable]["value"] = result.registers[0]
+
+        except AttributeError as e:
+            # The unit does not reply reliably
+            # ret = False
+            # _LOGGER.warning("Modbus read failed")
+            raise e
+        
 
     @staticmethod
     def get_twos_comp(argument):
@@ -215,7 +248,9 @@ class SystemAir(ClimateEntity):
     @property
     def fan_mode(self):
         """Return the fan setting."""
-        return self._fan_modes[self._holding_regs["fan_mode"]["value"][0] - 1]
+        # if self._update_on_read:
+        #     await self.update_from_register("holding", "fan_mode")
+        return self._fan_modes[self._holding_regs["fan_mode"]["value"] - 1]
 
     @property
     def fan_modes(self):
@@ -225,366 +260,76 @@ class SystemAir(ClimateEntity):
     @property
     def target_temperature(self):
         """Return the temperature we try to reach."""
-        return self._input_regs["target_temperature"]["value"][0] / 10.0
+        # if self._update_on_read:
+        #     await self.update_from_register("input", "target_temperature")
+        return self._input_regs["target_temperature"]["value"] / 10.0
 
     @property
     def current_temperature(self):
         """Return the current temperature."""
-        return self._holding_regs["supply_air_temperature"]["value"][0] / 10
+        # if self._update_on_read:
+        #     await self.update_from_register("holding", "supply_air_temperature")
+        return self._holding_regs["supply_air_temperature"]["value"] / 10
 
     @property
     def current_humidity(self):
         """Return the temperature we try to reach."""
-        return self._holding_regs["humidity"]["value"][0]
+        # if self._update_on_read:
+        #     await self.update_from_register("holding", "humidity")
+        return self._holding_regs["humidity"]["value"]
 
     @property
     def target_humidity(self):
         """Return the temperature we try to reach."""
-        return self._holding_regs["target_humidity"]["value"][0]
+        # if self._update_on_read:
+        #     await self.update_from_register("holding", "target_humidity")
+        return self._holding_regs["target_humidity"]["value"]
 
-    def set_temperature(self, **kwargs):
+    async def async_set_temperature(self, **kwargs):
         """Set new target temperature."""
         if kwargs.get(ATTR_TEMPERATURE) is not None:
-            target_temperature = kwargs.get(ATTR_TEMPERATURE, 20)
-        self._hub.write_register(
+            target_temperature = kwargs.get(ATTR_TEMPERATURE)
+            target_temperature=int(round(target_temperature*10))
+            _LOGGER.warning(f"Setting temp: {target_temperature} with type: {type(target_temperature)}")
+            if await self._hub.async_pymodbus_call(
             unit=self._slave,
             address=(self._holding_regs["target_temperature"]["addr"]),
-            value=round(target_temperature * 10.0),
-        )
+            value=target_temperature,
+            use_call=CALL_TYPE_WRITE_REGISTER):
+                self._holding_regs["target_temperature"]["value"] = target_temperature
+            else:
+                _LOGGER.error("Unable to set tempereatur to SystemAir modbus interface")
+        else:
+            _LOGGER.error("Errounous tempereatur to SystemAir")
 
-    def set_fan_mode(self, fan_mode):
+
+    async def async_set_fan_mode(self, fan_mode):
         """Set new fan mode."""
         fan_value = self._fan_modes.index(fan_mode) + 1
+        _LOGGER.warning(f"Setting fan_value: {fan_value} with type: {type(fan_value)}")
+        if await self._hub.async_pymodbus_call(
+        unit=self._slave,
+        address=(self._holding_regs["fan_mode"]["addr"]),
+        value=fan_value,
+        use_call=CALL_TYPE_WRITE_REGISTER):
+            self._holding_regs["fan_mode"]["value"] = fan_value
+        else:
+             _LOGGER.error("Unable to set tempereatur to SystemAir modbus interface")
+  
+    # async def set_humidity(self, **kwargs):
+    #     pass
 
-        self._hub.write_register(
-            unit=self._slave,
-            address=(self._holding_regs["fan_mode"]["addr"]),
-            value=fan_value,
-        )
-
-    # def get_raw_input_register(self, name):
-    #     """Get raw register value by name."""
-    #     if self._update_on_read:
-    #         self.update()
-    #     return self._input_regs[name]
-
-    # def get_raw_holding_register(self, name):
-    #     """Get raw register value by name."""
-    #     if self._update_on_read:
-    #         self.update()
-    #     return self._holding_regs[name]
-
-    # def set_raw_holding_register(self, name, value):
-    #     """Write to register by name."""
-    #     self._hub.write_register(
-    #         unit=self._slave, address=(self._holding_regs[name]["addr"]), value=value
-    #     )
-
-    # def set_fan_speed_supply(self, fan):
-    #     """Set fan speed supply."""
-    #     self._hub.write_register(
-    #         unit=self._slave,
-    #         address=(
-    #             self._holding_regs["REG_USERMODE_MANUAL_AIRFLOW_LEVEL_SAF"]["addr"]
-    #         ),
-    #         value=fan,
-    #     )
-
-    # @property
-    # def get_fan_speed_supply(self):
-    #     """Get fan speed supply."""
-    #     if self._update_on_read:
-    #         self.update()
-    #     return self._fan_speed_supply
-
-    # def set_fan_speed_extract(self, fan):
-    #     """Set fan speed extract."""
-    #     self._hub.write_register(
-    #         unit=self._slave,
-    #         address=(
-    #             self._holding_regs["REG_USERMODE_MANUAL_AIRFLOW_LEVEL_EAF"]["addr"]
-    #         ),
-    #         value=fan,
-    #     )
-
-    # @property
-    # def get_fan_speed_extract(self):
-    #     """Get fan speed extract."""
-    #     if self._update_on_read:
-    #         self.update()
-    #     return self._fan_speed_extract
-
-    # @property
-    # def get_supply_temp(self):
-    #     """Get supply temperature."""
-    #     if self._update_on_read:
-    #         self.update()
-    #     return self._supply_temp
-
-    # def set_setpoint_temp(self, temp):
-    #     self._hub.write_register(
-    #         unit=self._slave,
-    #         address=(self._holding_regs["REG_TC_SP"]["addr"]),
-    #         value=round(temp * 10.0),
-    #     )
-
-    # @property
-    # def get_setpoint_temp(self):
-    #     """Get setpoint temperature."""
-    #     if self._update_on_read:
-    #         self.update()
-    #     return self._setpoint_temp
-
-    # def set_setpoint_temp_max(self, temp):
-    #     self._hub.write_register(
-    #         unit=self._slave,
-    #         address=(self._holding_regs["REG_TC_CASCADE_SP_MAX"]["addr"]),
-    #         value=round(temp * 10.0),
-    #     )
-
-    # @property
-    # def get_setpoint_temp_max(self):
-    #     """Get setpoint temperature max."""
-    #     if self._update_on_read:
-    #         self.update()
-    #     return self._setpoint_temp_max
-
-    # def set_setpoint_temp_min(self, temp):
-    #     self._hub.write_register(
-    #         unit=self._slave,
-    #         address=(self._holding_regs["REG_TC_CASCADE_SP_MIN"]["addr"]),
-    #         value=round(temp * 10.0),
-    #     )
-
-    # @property
-    # def get_setpoint_temp_min(self):
-    #     """Get setpoint temperature min."""
-    #     if self._update_on_read:
-    #         self.update()
-    #     return self._setpoint_temp_min
-
-    # @property
-    # def get_current_humidity(self):
-    #     """Get  current humidity."""
-    #     if self._update_on_read:
-    #         self.update()
-    #     return self._current_humidity
-
-    # def set_setpoint_humidity(self, rhs):
-    #     self._hub.write_register(
-    #         unit=self._slave,
-    #         address=(self._holding_regs["REG_ROTOR_RH_TRANSFER_CTRL_SETPOINT"]["addr"]),
-    #         value=int(rhs),
-    #     )
-
-    # @property
-    # def get_setpoint_humidity(self):
-    #     """Get setpoint temperature."""
-    #     if self._update_on_read:
-    #         self.update()
-    #     return self._setpoint_humidity
-
-    # @property
-    # def get_user_mode(self):
-    #     """Get the set user mode."""
-    #     if self._update_on_read:
-    #         self.update()
-    #     return self._user_mode
-
-    # @property
-    # def get_extract_temp(self):
-    #     """Get the extract temperature."""
-    #     if self._update_on_read:
-    #         self.update()
-    #     return self._extract_temp
-
-    # @property
-    # def get_outdoor_temp(self):
-    #     """Get the extract temperature."""
-    #     if self._update_on_read:
-    #         self.update()
-    #     return self._outdoor_temp
-
-    # @property
-    # def get_filter_warning(self):
-    #     """If filter warning has been generated."""
-    #     if self._update_on_read:
-    #         self.update()
-    #     return self._filter_warning
-
-    # @property
-    # def get_filter_remaining_hours(self):
-    #     """Return remaining filter hours."""
-    #     if self._update_on_read:
-    #         self.update()
-    #     return self._filter_remaining_hours
-
-    # @property
-    # def get_heater(self):
-    #     """Is heater active."""
-    #     if self._update_on_read:
-    #         self.update()
-    #     return self._heater
-
-    # @property
-    # def get_heater_state(self):
-    #     """Return heater state."""
-    #     if self._update_on_read:
-    #         self.update()
-    #     return self._heater_state
-
-    # @property
-    # def get_heat_exchanger(self):
-    #     """Is heat exchanger active."""
-    #     if self._update_on_read:
-    #         self.update()
-    #     return self._heat_exchanger
-
-    # @property
-    # def get_heat_exchanger_state(self):
-    #     """Return heat exchanger state."""
-    #     if self._update_on_read:
-    #         self.update()
-    #     return self._heat_exchanger_state
-
-    # @property
-    # def get_cooler(self):
-    #     """Is cooler active."""
-    #     if self._update_on_read:
-    #         self.update()
-    #     return self._cooler
-
-    # @property
-    # def get_cooler_state(self):
-    #     """Return cooler state."""
-    #     if self._update_on_read:
-    #         self.update()
-    #     return self._cooler_state
-
-    # @property
-    # def get_fan_can_turn_off(self):
-    #     """Return if fan can be turned off."""
-    #     if self._update_on_read:
-    #         self.update()
-    #     return self._fan_can_turn_off
-
-
-# class Flexit(ClimateEntity):
-#     """Representation of a Flexit AC unit."""
-
-#     def __init__(self, hub, modbus_slave, name):
-#         """Initialize the unit."""
-#         self._hub = hub
-#         self._name = name
-#         self._slave = modbus_slave
-#         self._target_temperature = None
-#         self._current_temperature = None
-#         self._current_fan_mode = None
-#         self._current_operation = None
-#         self._fan_modes = ["Off", "Low", "Medium", "High"]
-#         self._current_operation = None
-#         self._filter_hours = None
-#         self._filter_alarm = None
-#         self._heat_recovery = None
-#         self._heater_enabled = False
-#         self._heating = None
-#         self._cooling = None
-#         self._alarm = False
-#         self.unit = pyflexit(hub, modbus_slave)
-
-#     @property
-#     def supported_features(self):
-#         """Return the list of supported features."""
-#         return SUPPORT_FLAGS
-
-#     def update(self):
-#         """Update unit attributes."""
-#         if not self.unit.update():
-#             _LOGGER.warning("Modbus read failed")
-
-#         self._target_temperature = self.unit.get_target_temp
-#         self._current_temperature = self.unit.get_temp
-#         self._current_fan_mode = self._fan_modes[self.unit.get_fan_speed]
-#         self._filter_hours = self.unit.get_filter_hours
-#         # Mechanical heat recovery, 0-100%
-#         self._heat_recovery = self.unit.get_heat_recovery
-#         # Heater active 0-100%
-#         self._heating = self.unit.get_heating
-#         # Cooling active 0-100%
-#         self._cooling = self.unit.get_cooling
-#         # Filter alarm 0/1
-#         self._filter_alarm = self.unit.get_filter_alarm
-#         # Heater enabled or not. Does not mean it's necessarily heating
-#         self._heater_enabled = self.unit.get_heater_enabled
-#         # Current operation mode
-#         self._current_operation = self.unit.get_operation
-
-#     @property
-#     def device_state_attributes(self):
-#         """Return device specific state attributes."""
-#         return {
-#             "filter_hours": self._filter_hours,
-#             "filter_alarm": self._filter_alarm,
-#             "heat_recovery": self._heat_recovery,
-#             "heating": self._heating,
-#             "heater_enabled": self._heater_enabled,
-#             "cooling": self._cooling,
-#         }
-
-#     @property
-#     def should_poll(self):
-#         """Return the polling state."""
-#         return True
-
-#     @property
-#     def name(self):
-#         """Return the name of the climate device."""
-#         return self._name
-
-#     @property
-#     def temperature_unit(self):
-#         """Return the unit of measurement."""
-#         return TEMP_CELSIUS
-
-#     @property
-#     def current_temperature(self):
-#         """Return the current temperature."""
-#         return self._current_temperature
-
-#     @property
-#     def target_temperature(self):
-#         """Return the temperature we try to reach."""
-#         return self._target_temperature
-
-#     @property
-#     def hvac_mode(self):
-#         """Return current operation ie. heat, cool, idle."""
-#         return self._current_operation
-
-#     @property
-#     def hvac_modes(self) -> List[str]:
-#         """Return the list of available hvac operation modes.
-
-#         Need to be a subset of HVAC_MODES.
-#         """
-#         return [HVAC_MODE_COOL]
-
-#     @property
-#     def fan_mode(self):
-#         """Return the fan setting."""
-#         return self._current_fan_mode
-
-#     @property
-#     def fan_modes(self):
-#         """Return the list of available fan modes."""
-#         return self._fan_modes
-
-#     def set_temperature(self, **kwargs):
-#         """Set new target temperature."""
-#         if kwargs.get(ATTR_TEMPERATURE) is not None:
-#             self._target_temperature = kwargs.get(ATTR_TEMPERATURE)
-#         self.unit.set_temp(self._target_temperature)
-
-#     def set_fan_mode(self, fan_mode):
-#         """Set new fan mode."""
-#         self.unit.set_fan_speed(self._fan_modes.index(fan_mode))
+    async def async_set_humidity(self, humidity):
+        """Set new target temperature."""
+    #    if kwargs.get(ATTR_HUMIDITY) is not None:
+    #        target_humidity = kwargs.get(ATTR_HUMIDITY, 30)
+        target_humidity=int(round(humidity))
+        _LOGGER.warning(f"Setting humidity: {target_humidity} with type: {type(target_humidity)}")
+        if await self._hub.async_pymodbus_call(
+           unit=self._slave,
+           address=(self._holding_regs["target_humidity"]["addr"]),
+           value=target_humidity,
+           use_call=CALL_TYPE_WRITE_REGISTER):
+            self._holding_regs["target_humidity"]["value"] = target_humidity
+        else:
+             _LOGGER.error("Unable to set tempereatur to SystemAir modbus interface")
