@@ -2,7 +2,7 @@
   "domain": "systemair",
   "name": "SystemAir",
   "config_flow": false,
-  "documentation": "https://www.home-assistant.io/integrations/systemair",
+  "documentation": "https://github.com/mvheimburg/hass-component-systemair",
   "requirements": [],
   "dependencies": ["modbus"],
   "codeowners": ["@mvheimburg"],

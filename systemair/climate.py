@@ -74,6 +74,7 @@ async def async_setup_platform(
     # async_add_entities([SystemAir(hub, modbus_slave, name)], True)
     async_add_entities([SystemAir(hub, config)], True)
     
+    return True
 
 # async def async_setup_entry(hass, config_entry, async_add_entities):
 #     """Set up the Demo SystemAir entry."""
@@ -138,6 +139,7 @@ class SystemAir(ClimateEntity):
         _LOGGER.warning("SAVE VTR COMPONENT SETUP")
         # self.min_humidity = 20
         # self.max_humidity = 50
+        # self.state = 'on'
 
     @property
     def supported_features(self):
