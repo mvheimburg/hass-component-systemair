@@ -112,7 +112,7 @@ class SystemAir(ClimateEntity):
         self._unit = PySystemAir(
                      async_callback_holding_reg=partial(self._hub.async_pymodbus_call, unit=self._slave, value=1, use_call=CALL_TYPE_REGISTER_INPUT)
                     ,async_callback_input_reg=partial(self._hub.async_pymodbus_call, unit=self._slave, value=1, use_call=CALL_TYPE_REGISTER_HOLDING)
-                    ,async_callback_writ_reg=partial(self._hub.async_pymodbus_call, unit=self._slave, use_call=CALL_TYPE_WRITE_REGISTER))
+                    ,async_callback_write_reg=partial(self._hub.async_pymodbus_call, unit=self._slave, use_call=CALL_TYPE_WRITE_REGISTER))
 
 
         self._fan_modes = ["Off", "Low", "Normal", "High"]
