@@ -61,8 +61,9 @@ class PySystemAir():
             if await self._async_callback_write_reg(address=register.addr, value=value):
                     register.value = value
             else:
-                _LOGGER.error(f"Unable to write {variable} to SystemAir modbus interface")
-
+                _LOGGER.error(f"Unable to write {variable} to SystemAir modbus interface") 
+        except AttributeError as e:
+            raise e
 
     @property
     def target_temperature(self):
