@@ -105,7 +105,7 @@ class SystemAir(ClimateEntity):
     _attr_hvac_mode = HVACMode.FAN_ONLY
     _attr_max_temp = 25
     _attr_min_temp = 15
-    _attr_supported_features = ClimateEntityFeature.FAN_MODE | ClimateEntityFeature.ATTR_CURRENT_TEMPERATURE | ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.TARGET_HUMIDITY | ClimateEntityFeature.ATTR_CURRENT_HUMIDITY 
+    _attr_supported_features = ClimateEntityFeature.FAN_MODE | ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.TARGET_HUMIDITY
     _attr_target_temperature_step = PRECISION_TENTHS
     _attr_temperature_unit = TEMP_CELSIUS
     _attr_fan_modes = [FAN_OFF, FAN_LOW, FAN_MEDIUM, FAN_HIGH, FAN_AUTO]
