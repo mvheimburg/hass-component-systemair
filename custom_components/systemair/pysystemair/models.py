@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from pydantic_yaml import YamlModel
+# from pydantic_yaml import YamlModel
 from typing import Optional
 from .const import REG_TYPE
 
