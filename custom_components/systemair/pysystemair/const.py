@@ -115,35 +115,34 @@ class FAN_MODES(Enum):
 #     }
 # }
 
-HVAC_MODES = [
-    HVAC_MODE_OFF,
-    HVAC_MODE_COOL,
-    HVAC_MODE_HEAT,
-    HVAC_MODE_FAN_ONLY,
-    HVAC_MODE_DRY,
-]
+# class HVAC_MODES(Enum):
+#     OFF = "off"
+#     HEAT = "heat"
+#     COOL = "cool"
+#     AUTO = "auto"
+#     DRY = "dry"
+#     FAN_ONLY = "fan_only"
 
-SA_FAN_MODE_OFF = "off"
-SA_FAN_MODE_LOW = "low"
-SA_FAN_MODE_MEDIUM = "medium"
-SA_FAN_MODE_HIGH = "high"
 
-FAN_MODE = {
-    1: SA_FAN_MODE_OFF,
-    2: SA_FAN_MODE_LOW,
-    3: SA_FAN_MODE_MEDIUM,
-    4: SA_FAN_MODE_HIGH,
-}
+# SA_FAN_MODE_OFF = "off"
+# SA_FAN_MODE_LOW = "low"
+# SA_FAN_MODE_MEDIUM = "medium"
+# SA_FAN_MODE_HIGH = "high"
+
+# FAN_MODE = {
+#     1: SA_FAN_MODE_OFF,
+#     2: SA_FAN_MODE_LOW,
+#     3: SA_FAN_MODE_MEDIUM,
+#     4: SA_FAN_MODE_HIGH,
+# }
 
 SA_OPERATION_MODE_AUTO = "auto"
 SA_OPERATION_MODE_MANUAL = "manual"
 SA_OPERATION_MODE_CROWDED = "crowded"
-SA_OPERATION_MODE_REFRESH = "refresh"
-SA_OPERATION_MODE_FIREPLACE = "fireplace"
+# SA_OPERATION_MODE_REFRESH = "refresh"
+# SA_OPERATION_MODE_FIREPLACE = "fireplace"
 SA_OPERATION_MODE_HOLIDAY = "holiday"
 SA_OPERATION_MODE_IDLE = "idle"
-
-# Custom
 SA_OPERATION_MODE_OFF = "off"
 
 USER_MODE = {

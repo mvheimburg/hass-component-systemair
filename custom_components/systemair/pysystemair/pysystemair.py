@@ -95,9 +95,9 @@ class PySystemAir():
 
 
 
-    async def async_set_fan_mode(self, fan_mode):
+    async def async_set_fan_mode(self, value):
         """Set new fan mode."""
-        fan_value = FAN_MODES(fan_mode)
+        value = FAN_MODES(value)
         await self.async_write_to_register(self._registers.saf_usermode_fs, value)
         await self.async_write_to_register(self._registers.eaf_usermode_fs, value)
         # _LOGGER.warning(f"Setting fan_value: {fan_value} with type: {type(fan_value)}")
@@ -112,11 +112,11 @@ class PySystemAir():
 
     # asypass
 
-    async def async_set_humidity(self, humidity):
+    async def async_set_humidity(self, value):
         """Set new target temperature."""
     #    if kwargs.get(ATTR_HUMIDITY) is not None:
     #        target_humidity = kwargs.get(ATTR_HUMIDITY, 30)
-        target_humidity=int(round(humidity))
+        target_humidity=int(round(value))
         pass
     #     _LOGGER.warning(f"Setting humidity: {target_humidity} with type: {type(target_humidity)}")
     #     if await self._hub.async_pymodbus_call(
