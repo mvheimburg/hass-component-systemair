@@ -91,11 +91,10 @@ class SystemAir(ClimateEntity):
     _attr_fan_modes = [FAN_OFF, FAN_LOW, FAN_MEDIUM, FAN_HIGH, FAN_AUTO]
     _attr_fan_mode = FAN_MEDIUM
 
-    def __init__(self, hub: ModbusHub, modbus_slave: int | None, name: str | None
-    ) -> None:
+    def __init__(self, hub: ModbusHub, modbus_slave: int | None, name: str | None) -> None:
         """Initialize the unit."""
         self._hub = hub
-        self._name = name
+        self._name = namedd
         self._slave = modbus_slave
         self._unit = PySystemAir(
                      async_callback_holding_reg=partial(self._hub.async_pymodbus_call, unit=self._slave, value=1, use_call=CALL_TYPE_REGISTER_INPUT)

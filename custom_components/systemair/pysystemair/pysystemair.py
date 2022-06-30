@@ -7,15 +7,15 @@ from .models import (
     ,InputRegister,HoldingRegister,Register
 )
 class PySystemAir():
-    _async_callback_holding_reg: Awaitable
-    _async_callback_input_reg: Awaitable
-    _async_callback_write_reg: Awaitable
+    # _async_callback_holding_reg: Awaitable
+    # _async_callback_input_reg: Awaitable
+    # _async_callback_write_reg: Awaitable
 
-    def __init__(self, async_callback_holding_reg=None, async_callback_input_reg=None, async_callback_write_reg=None):
-        self._async_callback_holding_reg=async_callback_holding_reg
-        self._async_callback_input_reg=async_callback_input_reg
-        self._async_callback_write_reg=async_callback_write_reg
-        self._registers = RegMap()
+    # def __init__(self, async_callback_holding_reg=None, async_callback_input_reg=None, async_callback_write_reg=None):
+    #     self._async_callback_holding_reg=async_callback_holding_reg
+    #     self._async_callback_input_reg=async_callback_input_reg
+    #     self._async_callback_write_reg=async_callback_write_reg
+    #     self._registers = RegMap()
 
 
     async def async_update_all(self):
@@ -25,10 +25,10 @@ class PySystemAir():
        
         for key, register in self._registers.dict().items():
             try:
-                print(f"Updating register for {key}")
+                 _LOGGER.warning(f"Updating register for {key}")
                 await self.async_update_from_register(register)
             except AttributeError:
-                print(f"Modbus read failed for {key}")
+                 _LOGGER.warning(f"Modbus read failed for {key}")
 
     async def async_update_from_register(self, register:Register):
         """
@@ -37,8 +37,10 @@ class PySystemAir():
         try:
             result=None
             if register.reg_type == REG_TYPE.INPUT:
+                _LOGGER.warning(f"register.reg_type == {REG_TYPE.INPUT}")
                 result = await self._async_callback_input_reg(address=register.addr)
             elif reg_type == REG_TYPE.HOLDING:
+                _LOGGER.warning(f"register.reg_type == {REG_TYPE.HOLDING}")
                 result = await self._async_callback_holding_reg(address=register.addr)
 
             if result is None:
