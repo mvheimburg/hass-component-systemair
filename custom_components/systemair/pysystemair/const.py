@@ -21,7 +21,7 @@ class FAN_MODES(IntEnum):
     NORMAL=3
     HIGH=4
 
-class USER_MODE(InEnum):
+class USER_MODE(IntEnum):
     AUTO=0
     MANUAL=1
     CROWDED=2
