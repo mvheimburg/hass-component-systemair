@@ -65,7 +65,7 @@ async def async_setup_platform(
     hass: HomeAssistant,
     config: ConfigType,
     async_add_entities,
-    discovery_info: DiscoveryInfoType | None = None,
+    discovery_info: DiscoveryInfoType = None,
 ):
     """Set up the SystemAir Platform."""
     modbus_slave = config.get(CONF_SLAVE)
