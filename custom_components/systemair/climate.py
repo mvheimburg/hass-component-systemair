@@ -68,7 +68,7 @@ async def async_setup_platform(
     discovery_info: DiscoveryInfoType | None = None,
 ):
     """Set up the SystemAir Platform."""
-       modbus_slave = config.get(CONF_SLAVE)
+    modbus_slave = config.get(CONF_SLAVE)
     name = config.get(CONF_NAME)
     hub = get_hub(hass, config[CONF_HUB])
     async_add_entities([SystemAir(hub, modbus_slave, name)], True)
