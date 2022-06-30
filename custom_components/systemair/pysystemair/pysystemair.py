@@ -12,13 +12,13 @@ class PySystemAir():
     _async_callback_write_reg: Awaitable
 
     def __init__(self, async_callback_holding_reg=None, async_callback_input_reg=None, async_callback_write_reg=None):
-        if async_callback is None:
-            #Todo, make connection and callback
-            pass
-        else:
-            self._async_callback_holding_reg=async_callback_holding_reg
-            self._async_callback_input_reg=async_callback_input_reg
-            self._async_callback_write_reg=async_callback_write_reg
+        # if async_callback is None:
+        #     #Todo, make connection and callback
+        #     pass
+        # else:
+        self._async_callback_holding_reg=async_callback_holding_reg
+        self._async_callback_input_reg=async_callback_input_reg
+        self._async_callback_write_reg=async_callback_write_reg
         # self._slave=slave
         # self._update_on_read = update_on_read
         self._registers = RegMap()
