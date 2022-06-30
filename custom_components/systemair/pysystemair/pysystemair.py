@@ -12,15 +12,9 @@ class PySystemAir():
     _async_callback_write_reg: Awaitable
 
     def __init__(self, async_callback_holding_reg=None, async_callback_input_reg=None, async_callback_write_reg=None):
-        # if async_callback is None:
-        #     #Todo, make connection and callback
-        #     pass
-        # else:
         self._async_callback_holding_reg=async_callback_holding_reg
         self._async_callback_input_reg=async_callback_input_reg
         self._async_callback_write_reg=async_callback_write_reg
-        # self._slave=slave
-        # self._update_on_read = update_on_read
         self._registers = RegMap()
 
 
@@ -66,10 +60,18 @@ class PySystemAir():
             raise e
 
     @property
+    def fan_mode(self):
+        """Return the fan setting."""
+        return self._registers.saf_usermode_fs.value
+
+    @property
+    def fan_modes(self):
+        """Return the fan setting."""
+        return self._registers.saf_usermode_fs.value
+
+    @property
     def target_temperature(self):
         """Return the temperature we try to reach."""
-        # if self._update_on_read:
-        #     await self.update_from_register("input", "target_temperature")
         return self._registers.target_temperature.value / 10.0
 
     @property
@@ -85,14 +87,12 @@ class PySystemAir():
     @property
     def target_humidity(self):
         """Return the temperature we try to reach."""
-        # if self._update_on_read:
-        #     await self.update_from_register("holding", "target_humidity")
         return self._registers.target_humidity.value
+
 
     async def async_set_temperature(self, value):
         """Set new target temperature."""
         await self.async_write_to_register(self._registers.target_temperature, value)
-
 
 
     async def async_set_fan_mode(self, value):
@@ -100,31 +100,9 @@ class PySystemAir():
         value = FAN_MODES(value)
         await self.async_write_to_register(self._registers.saf_usermode_fs, value)
         await self.async_write_to_register(self._registers.eaf_usermode_fs, value)
-        # _LOGGER.warning(f"Setting fan_value: {fan_value} with type: {type(fan_value)}")
-        # if await self._hub.async_pymodbus_call(
-        # unit=self._slave,
-        # address=(self._holding_regs["fan_mode"]["addr"]),
-        # value=fan_value,
-        # use_call=CALL_TYPE_WRITE_REGISTER):
-        #     self._holding_regs["fan_mode"]["value"] = fan_value
-        # else:
-        #      _LOGGER.error("Unable to set tempereatur to SystemAir modbus interface")
 
-    # asypass
 
     async def async_set_humidity(self, value):
         """Set new target temperature."""
-    #    if kwargs.get(ATTR_HUMIDITY) is not None:
-    #        target_humidity = kwargs.get(ATTR_HUMIDITY, 30)
         target_humidity=int(round(value))
-        pass
-    #     _LOGGER.warning(f"Setting humidity: {target_humidity} with type: {type(target_humidity)}")
-    #     if await self._hub.async_pymodbus_call(
-    #        unit=self._slave,
-    #        address=(self._holding_regs["target_humidity"]["addr"]),
-    #        value=target_humidity,
-    #        use_call=CALL_TYPE_WRITE_REGISTER):
-    #         self._holding_regs["target_humidity"]["value"] = target_humidity
-    #     else:
-    #          _LOGGER.error("Unable to set tempereatur to SystemAir modbus interface")nc def set_humidity(self, **kwargs):
-    # #
+        

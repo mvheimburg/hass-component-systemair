@@ -3,6 +3,7 @@
 # import datetime
 # import timedelta
 from typing import Final
+from .pysystemair.const import FAN_MODES
 
 from homeassistant.components.climate.const import (
     FAN_AUTO,
@@ -24,6 +25,21 @@ SAVE_VTR = "save_vtr"
 
 UPDATE_ON_READ = True
 DEFAULT_TEMPERATURE = 20
+
+
+HASS_TO_SYSTEMAIR_FAN_MODES = {
+    FAN_AUTO: FAN_MODES.AUTO,
+    FAN_LOW: FAN_MODES.LOW,
+    FAN_MEDIUM: FAN_MODES.NORMAL,
+    FAN_HIGH: FAN_MODES.HIGH,
+}
+SYSTEMAIR_TO_HASS_FAN_MODES = {
+    FAN_MODES.AUTO: FAN_AUTO,
+    FAN_MODES.LOW: FAN_LOW ,
+    FAN_MODES.NORMAL: FAN_MEDIUM,
+    FAN_MODES.HIGH: FAN_HIGH:,
+}
+
 
 # REGMAP_INPUT = {
 #     "target_temperature": {
