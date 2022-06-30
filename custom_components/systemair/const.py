@@ -7,9 +7,10 @@ from .pysystemair.const import FAN_MODES, USER_MODE
 
 from homeassistant.components.climate.const import (
     FAN_AUTO,
-    FAN_HIGH,
+    FAN_OFF,
     FAN_LOW,
     FAN_MEDIUM,
+    FAN_HIGH,
     HVAC_MODE_COOL,
     HVAC_MODE_DRY,
     HVAC_MODE_FAN_ONLY,
