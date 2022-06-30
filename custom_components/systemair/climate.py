@@ -65,41 +65,19 @@ async def async_setup_platform(
     hass: HomeAssistant,
     config: ConfigType,
     async_add_entities,
-    discovery_info: DiscoveryInfoType = None,
+    discovery_info: DiscoveryInfoType | None = None,
 ):
     """Set up the SystemAir Platform."""
-    # modbus_slave = config.get(CONF_SLAVE)
-
-    # if discovery_info is None:  # pragma: no cover
-    #     return
-
-    # name = config.get(CONF_NAME)
-    # hub = hass.data[MODBUS_DOMAIN][config.get(CONF_HUB)]
-    # hub = hass.data[MODBUS_DOMAIN][config.get(CONF_HUB)]
+       modbus_slave = config.get(CONF_SLAVE)
+    name = config.get(CONF_NAME)
     hub = get_hub(hass, config[CONF_HUB])
-    # async_add_entities([SystemAir(hub, modbus_slave, name)], True)
-    async_add_entities([SystemAir(hub, config)], True)
+    async_add_entities([SystemAir(hub, modbus_slave, name)], True)
     
-    return True
-
-# async def async_setup_entry(hass, config_entry, async_add_entities):
-#     """Set up the Demo SystemAir entry."""
-#     await async_setup_platform(hass, {}, async_add_entities)
 
 
 class SystemAir(ClimateEntity):
     """
-    Class SystemairSave used to represent a Systemair SAVE VTR unit.
-    Attributes
-    ----------
-    _input_regs : dict
-        A dictionary with input registers.
-    _holding_regs : dict
-        A dictionary with holding registers.
-    _slave : int
-        Slave number of the unit.
-    _conn : ModbusClient
-        Modbus client (pymodbus.client) used to communicate with the unit.
+    Class SystemAir used to represent a Systemair SAVE VTR unit.
     """
     _attr_hvac_modes = [HVACMode.HEAT, HVACMode.COOL, HVACMode.FAN_ONLY]
     _attr_hvac_mode = HVACMode.FAN_ONLY
@@ -111,15 +89,12 @@ class SystemAir(ClimateEntity):
     _attr_fan_modes = [FAN_OFF, FAN_LOW, FAN_MEDIUM, FAN_HIGH, FAN_AUTO]
     _attr_fan_mode = FAN_MEDIUM
 
-    def __init__(
-        self, 
-        hub: ModbusHub, 
-        # modbus_slave, 
-        config):
+    def __init__(hub: ModbusHub, modbus_slave: int | None, name: str | None
+    ) -> None:
         """Initialize the unit."""
         self._hub = hub
-        self._name = config.get(CONF_NAME)
-        self._slave = config.get(CONF_SLAVE)
+        self._name = name
+        self._slave = modbus_slave
         self._unit = PySystemAir(
                      async_callback_holding_reg=partial(self._hub.async_pymodbus_call, unit=self._slave, value=1, use_call=CALL_TYPE_REGISTER_INPUT)
                     ,async_callback_input_reg=partial(self._hub.async_pymodbus_call, unit=self._slave, value=1, use_call=CALL_TYPE_REGISTER_HOLDING)
