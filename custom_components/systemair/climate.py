@@ -91,7 +91,7 @@ class SystemAir(ClimateEntity):
     _attr_fan_modes = [FAN_OFF, FAN_LOW, FAN_MEDIUM, FAN_HIGH, FAN_AUTO]
     _attr_fan_mode = FAN_MEDIUM
 
-    def __init__(hub: ModbusHub, modbus_slave: int | None, name: str | None
+    def __init__(self, hub: ModbusHub, modbus_slave: int | None, name: str | None
     ) -> None:
         """Initialize the unit."""
         self._hub = hub
