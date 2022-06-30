@@ -19,7 +19,7 @@ class HoldingRegister(Register):
 ## https://shop.systemair.com/upload/assets/SAVE_MODBUS_VARIABLE_LIST_20190116__REV__29_.PDF
 ## registry values - 1 for some reason
 
-class RegMap():
+class RegMap(BaseModel):
     #Input registers
     sa_target_temperature_      = InputRegister(addr=2053) # REG_TC_SP_SATC: Temperature setpoint for the supply air temperature
     remaining_filter_time_      = InputRegister(addr=7004) # REG_FILTER_REMAINING_TIME_L: Remaining filter time in seconds, lower 16 bits
