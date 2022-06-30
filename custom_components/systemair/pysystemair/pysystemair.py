@@ -22,11 +22,13 @@ class PySystemAir():
         """
         Updates all of the input and holding regs dict values.
         """
-        try:
-            for key, register in self._registers.dict().items():
+       
+        for key, register in self._registers.dict().items():
+            try:
+                print(f"Updating register for {key}")
                 await self.async_update_from_register(register)
-        except AttributeError:
-            print(f"Modbus read failed for {key}")
+            except AttributeError:
+                print(f"Modbus read failed for {key}")
 
     async def async_update_from_register(self, register:Register):
         """
