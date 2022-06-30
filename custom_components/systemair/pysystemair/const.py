@@ -1,22 +1,8 @@
 """Constants for the systemair integration."""
 
-# import datetime
-# import timedelta
 from typing import Final
+from enum import IntEnum, Enum
 
-from homeassistant.components.climate.const import (
-    FAN_AUTO,
-    FAN_HIGH,
-    FAN_LOW,
-    FAN_MEDIUM,
-    HVAC_MODE_COOL,
-    HVAC_MODE_DRY,
-    HVAC_MODE_FAN_ONLY,
-    HVAC_MODE_HEAT,
-    HVAC_MODE_OFF,
-    SUPPORT_FAN_MODE,
-    SUPPORT_TARGET_TEMPERATURE,
-)
 
 # DOMAIN = "systemair"
 DEVICE_DEFAULT_NAME = "SystemAir"
@@ -25,8 +11,18 @@ SAVE_VTR = "save_vtr"
 UPDATE_ON_READ = True
 DEFAULT_TEMPERATURE = 20
 
-# REGMAP_INPUT = {
-#     "target_temperature": {
+class REG_TYPE(IntEnum):
+    INPUT=1
+    HOLDING=2
+
+class FAN_MODES(Enum):
+    OFF=1
+    LOW=2   
+    NORMAL=3
+    HIGH=4
+
+# class REGMAP_INPUT():
+#     target_temperature: {
 #         "addr": 2053,
 #         "value":None,
 #     },  # REG_TC_SP_SATC: Temperature setpoint for the supply air temperature
@@ -112,7 +108,11 @@ DEFAULT_TEMPERATURE = 20
 #     "target_humidity": {
 #         "addr": 2202,
 #         "value":None,
-#     },  # REG_ROTOR_RH_TRANSFER_CTRL_SETPOINT: Set point setting for RH transfer control
+#     }, 
+#     "REG_SENSOR_CO2S": {
+#         "addr": 12115,
+#         "value":None,
+#     }
 # }
 
 HVAC_MODES = [

@@ -3,6 +3,7 @@ import logging
 from typing import List
 import asyncio
 import voluptuous as vol
+from functools import partial
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
@@ -52,7 +53,7 @@ _LOGGER = logging.getLogger(__name__)
 
 SUPPORT_FLAGS = SUPPORT_TARGET_TEMPERATURE | SUPPORT_FAN_MODE | SUPPORT_TARGET_HUMIDITY
 
-
+from .pysystemair.pysystemair import PySystemAir
 
 
 async def async_setup_platform(
@@ -108,10 +109,16 @@ class SystemAir(ClimateEntity):
         self._name = config.get(CONF_NAME)
         self._slave = config.get(CONF_SLAVE)
 
+        self._unit = PySystemAir(
+                     async_callback_holding_reg=partial(self._hub.async_pymodbus_call, unit=self._slave, value=1, use_call=CALL_TYPE_REGISTER_INPUT)
+                    ,async_callback_input_reg=partial(self._hub.async_pymodbus_call, unit=self._slave, value=1, use_call=CALL_TYPE_REGISTER_HOLDING)
+                    ,async_callback_writ_reg=partial(self._hub.async_pymodbus_call, unit=self._slave, use_call=CALL_TYPE_WRITE_REGISTER))
+
+
         self._fan_modes = ["Off", "Low", "Normal", "High"]
 
-        self._input_regs = REGMAP_INPUT
-        self._holding_regs = REGMAP_HOLDING
+        # self._input_regs = REGMAP_INPUT
+        # self._holding_regs = REGMAP_HOLDING
 
         self._current_operation = None
         # self._setpoint_temp_max = None
@@ -148,55 +155,55 @@ class SystemAir(ClimateEntity):
 
 
 
-    async def async_update(self):
-        """
-        Updates all of the input and holding regs dict values.
-        """
-        ret = True
-        try:
-            for k in self._input_regs:
-                await self.async_update_from_register("input", k)
-                # self._input_regs[k]["value"] = self._hub.read_input_registers(
-                #     unit=self._slave, address=self._input_regs[k]["addr"], value=1
-                # ).registers
-            for k in self._holding_regs:
-                await self.async_update_from_register("holding", k)
-                # self._holding_regs[k]["value"] = self._hub.read_holding_registers(
-                #     unit=self._slave, address=self._holding_regs[k]["addr"], value=1
-                # ).registers
-        except AttributeError:
-            # The unit does not reply reliably
-            ret = False
-            print("Modbus read failed")
+    # async def async_update(self):
+    #     """
+    #     Updates all of the input and holding regs dict values.
+    #     """
+    #     ret = True
+    #     try:
+    #         for k in self._input_regs:
+    #             await self.async_update_from_register("input", k)
+    #             # self._input_regs[k]["value"] = self._hub.read_input_registers(
+    #             #     unit=self._slave, address=self._input_regs[k]["addr"], value=1
+    #             # ).registers
+    #         for k in self._holding_regs:
+    #             await self.async_update_from_register("holding", k)
+    #             # self._holding_regs[k]["value"] = self._hub.read_holding_registers(
+    #             #     unit=self._slave, address=self._holding_regs[k]["addr"], value=1
+    #             # ).registers
+    #     except AttributeError:
+    #         # The unit does not reply reliably
+    #         ret = False
+    #         print("Modbus read failed")
 
 
-    async def async_update_from_register(self, reg_type, variable):
-        """
-        Updates all of the input and holding regs dict values.
-        """
-        try:
-            if reg_type == "input":
-                result = await self._hub.async_pymodbus_call(
-                    unit=self._slave, address=self._input_regs[variable]["addr"], value=1, use_call=CALL_TYPE_REGISTER_INPUT)
-                if result is None:
-                    _LOGGER.warning(f"Error reading {variable} value from SystemAir modbus adapter")
-                else:
-                    self._input_regs[variable]["value"] = result.registers[0]
+    # async def async_update_from_register(self, reg_type, variable):
+    #     """
+    #     Updates all of the input and holding regs dict values.
+    #     """
+    #     try:
+    #         if reg_type == "input":
+    #             result = await self._hub.async_pymodbus_call(
+    #                 unit=self._slave, address=self._input_regs[variable]["addr"], value=1, use_call=CALL_TYPE_REGISTER_INPUT)
+    #             if result is None:
+    #                 _LOGGER.warning(f"Error reading {variable} value from SystemAir modbus adapter")
+    #             else:
+    #                 self._input_regs[variable]["value"] = result.registers[0]
 
 
-            elif reg_type == "holding":
-                result = await self._hub.async_pymodbus_call(
-                    unit=self._slave, address=self._holding_regs[variable]["addr"], value=1, use_call=CALL_TYPE_REGISTER_HOLDING)
-                if result is None:
-                    _LOGGER.warning(f"Error reading {variable} value from SystemAir modbus adapter")
-                else:
-                    self._holding_regs[variable]["value"] = result.registers[0]
+    #         elif reg_type == "holding":
+    #             result = await self._hub.async_pymodbus_call(
+    #                 unit=self._slave, address=self._holding_regs[variable]["addr"], value=1, use_call=CALL_TYPE_REGISTER_HOLDING)
+    #             if result is None:
+    #                 _LOGGER.warning(f"Error reading {variable} value from SystemAir modbus adapter")
+    #             else:
+    #                 self._holding_regs[variable]["value"] = result.registers[0]
 
-        except AttributeError as e:
-            # The unit does not reply reliably
-            # ret = False
-            # _LOGGER.warning("Modbus read failed")
-            raise e
+    #     except AttributeError as e:
+    #         # The unit does not reply reliably
+    #         # ret = False
+    #         # _LOGGER.warning("Modbus read failed")
+    #         raise e
         
 
     @staticmethod
@@ -264,7 +271,7 @@ class SystemAir(ClimateEntity):
         """Return the temperature we try to reach."""
         # if self._update_on_read:
         #     await self.update_from_register("input", "target_temperature")
-        return self._input_regs["target_temperature"]["value"] / 10.0
+        return self._unit.target_temperature()
 
     @property
     def current_temperature(self):
