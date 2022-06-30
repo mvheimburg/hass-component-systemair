@@ -15,13 +15,13 @@ class REG_TYPE(IntEnum):
     INPUT=1
     HOLDING=2
 
-class FAN_MODES(Enum):
+class FAN_MODES(IntEnum):
     OFF=1
     LOW=2   
     NORMAL=3
     HIGH=4
 
-class USER_MODE(Enum):
+class USER_MODE(InEnum):
     AUTO=0
     MANUAL=1
     CROWDED=2
