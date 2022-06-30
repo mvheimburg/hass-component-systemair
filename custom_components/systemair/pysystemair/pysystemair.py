@@ -65,7 +65,7 @@ class PySystemAir():
     def fan_mode(self):
         """Return the fan setting."""
         if self._registers.saf_usermode_fs.value is None:
-            return 0
+            return 3
         return self._registers.saf_usermode_fs.value
 
     # @property
