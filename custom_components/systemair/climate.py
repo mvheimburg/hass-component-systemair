@@ -1,4 +1,6 @@
 """Platform for newer SystemAir AC units with Modbus adapter."""
+from __future__ import annotations
+
 import logging
 from typing import List
 import asyncio
@@ -65,7 +67,7 @@ async def async_setup_platform(
     hass: HomeAssistant,
     config: ConfigType,
     async_add_entities,
-    discovery_info: DiscoveryInfoType = None,
+    discovery_info: DiscoveryInfoType | None = None,
 ):
     """Set up the SystemAir Platform."""
     modbus_slave = config.get(CONF_SLAVE)
