@@ -3,7 +3,7 @@
 # import datetime
 # import timedelta
 from typing import Final
-from .pysystemair.const import FAN_MODES
+from .pysystemair.const import FAN_MODES, USER_MODE
 
 from homeassistant.components.climate.const import (
     FAN_AUTO,
@@ -28,13 +28,13 @@ DEFAULT_TEMPERATURE = 20
 
 
 HASS_TO_SYSTEMAIR_FAN_MODES = {
-    FAN_AUTO: FAN_MODES.AUTO,
+    FAN_OFF: FAN_MODES.OFF,
     FAN_LOW: FAN_MODES.LOW,
     FAN_MEDIUM: FAN_MODES.NORMAL,
     FAN_HIGH: FAN_MODES.HIGH,
 }
 SYSTEMAIR_TO_HASS_FAN_MODES = {
-    FAN_MODES.AUTO: FAN_AUTO,
+    FAN_MODES.OFF: FAN_OFF,
     FAN_MODES.LOW: FAN_LOW ,
     FAN_MODES.NORMAL: FAN_MEDIUM,
     FAN_MODES.HIGH: FAN_HIGH,
