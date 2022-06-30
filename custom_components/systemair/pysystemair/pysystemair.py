@@ -64,31 +64,43 @@ class PySystemAir():
     @property
     def fan_mode(self):
         """Return the fan setting."""
+        if self._registers.saf_usermode_fs.value is None:
+            return 0
         return self._registers.saf_usermode_fs.value
 
-    @property
-    def fan_modes(self):
-        """Return the fan setting."""
-        return self._registers.saf_usermode_fs.value
+    # @property
+    # def fan_modes(self):
+    #     """Return the fan setting."""
+    #     # if self._registers.saf_usermode_fs.value = None:
+    #     #     return 0
+    #     return FAN_MODES
 
     @property
     def target_temperature(self):
         """Return the temperature we try to reach."""
+        if self._registers.target_temperature.value is None:
+            return 0
         return self._registers.target_temperature.value / 10.0
 
     @property
     def current_temperature(self):
         """Return the current temperature."""
+        if self._registers.sa_temperature_sensor.value is None:
+            return 0
         return self._registers.sa_temperature_sensor.value / 10
 
     @property
     def current_humidity(self):
         """Return the temperature we try to reach."""
+        if self._registers.pdm_humidity_sensor.value is None:
+            return 0
         return self._registers.pdm_humidity_sensor.value
 
     @property
     def target_humidity(self):
         """Return the temperature we try to reach."""
+        if self._registers.target_humidity.value is None:
+            return 0
         return self._registers.target_humidity.value
 
 
