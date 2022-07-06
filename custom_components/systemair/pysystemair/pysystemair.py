@@ -7,15 +7,15 @@ from .models import (
     ,InputRegister,HoldingRegister,Register
 )
 class PySystemAir():
-    # _async_callback_holding_reg: Awaitable
-    # _async_callback_input_reg: Awaitable
-    # _async_callback_write_reg: Awaitable
+    _async_callback_holding_reg: Awaitable
+    _async_callback_input_reg: Awaitable
+    _async_callback_write_reg: Awaitable
 
-    # def __init__(self, async_callback_holding_reg=None, async_callback_input_reg=None, async_callback_write_reg=None):
-    #     self._async_callback_holding_reg=async_callback_holding_reg
-    #     self._async_callback_input_reg=async_callback_input_reg
-    #     self._async_callback_write_reg=async_callback_write_reg
-    #     self._registers = RegMap()
+    def __init__(self, async_callback_holding_reg=None, async_callback_input_reg=None, async_callback_write_reg=None):
+        self._async_callback_holding_reg=async_callback_holding_reg
+        self._async_callback_input_reg=async_callback_input_reg
+        self._async_callback_write_reg=async_callback_write_reg
+        self._registers = RegMap
 
 
     async def async_update_all(self):
@@ -23,29 +23,46 @@ class PySystemAir():
         Updates all of the input and holding regs dict values.
         """
        
-        for key, register in self._registers.dict().items():
+        for key, register in self._registers.items():
+            # _LOGGER.warning(f"Updating register for {key} {register}")
+            # _LOGGER.warning(f"register.addr == {register.addr}")
+            # _LOGGER.warning(f"register.reg_type == {register.reg_type}")
             try:
-                 _LOGGER.warning(f"Updating register for {key}")
-                await self.async_update_from_register(register)
+                await self.async_update_from_register(key, register)
+                # result=None
+                # if register.reg_type == REG_TYPE.INPUT:
+                #     result = await self._async_callback_input_reg(address=register.addr)
+                # elif register.reg_type == REG_TYPE.HOLDING:
+                #     result = await self._async_callback_holding_reg(address=register.addr)
+                # else:
+                #     _LOGGER.warning(f"register.reg_type not matched")
+                # # _LOGGER.warning(f"result= {result}")
+                # if result is None:
+                #     _LOGGER.warning(f"Error reading {variable} value from SystemAir modbus adapter")
+                # else:
+                #     register.value = result.registers[0]
             except AttributeError:
                  _LOGGER.warning(f"Modbus read failed for {key}")
 
-    async def async_update_from_register(self, register:Register):
+    async def async_update_from_register(self, key, register):
         """
         Updates all of the input and holding regs dict values.
         """
         try:
             result=None
+            _LOGGER.warning(f"register.addr == {register.addr}")
+            _LOGGER.warning(f"register.reg_type == {register.reg_type}")
             if register.reg_type == REG_TYPE.INPUT:
-                _LOGGER.warning(f"register.reg_type == {REG_TYPE.INPUT}")
+                _LOGGER.warning(f"calling {self._async_callback_input_reg}")
                 result = await self._async_callback_input_reg(address=register.addr)
-            elif reg_type == REG_TYPE.HOLDING:
-                _LOGGER.warning(f"register.reg_type == {REG_TYPE.HOLDING}")
+            elif register.reg_type == REG_TYPE.HOLDING:
+                _LOGGER.warning(f"calling {self._async_callback_holding_reg}")
                 result = await self._async_callback_holding_reg(address=register.addr)
 
             if result is None:
-                 _LOGGER.warning(f"Error reading {variable} value from SystemAir modbus adapter")
+                 _LOGGER.warning(f"Error reading {key} value from SystemAir modbus adapter")
             else:
+                _LOGGER.warning(f"{key} value is {result.registers[0]}")
                 register.value = result.registers[0]
         except AttributeError as e:
             raise e
@@ -63,6 +80,14 @@ class PySystemAir():
         except AttributeError as e:
             raise e
 
+    # @property
+    # def user_modes(self):
+    #     """Return the fan setting."""
+    #     return list( USER_MODES.values())
+
+
+
+
     @property
     def fan_mode(self):
         """Return the fan setting."""
@@ -70,12 +95,85 @@ class PySystemAir():
             return 3
         return self._registers.saf_usermode_fs.value
 
+
+
+    @property
+    def filter_hours(self):
+        if self._registers.remaining_filter_time_.value is None:
+            return 0
+        return self._registers.remaining_filter_time_.value 
+
+    @property
+    def filter_alarm(self):
+        if self._registers.filter_alarm_.value is None:
+            return 0
+        return self._registers.filter_alarm_.value
+
+    @property
+    def heat_exchanger_active(self):
+        if self._registers.heat_exchanger_active_.value is None:
+            return 0
+        return self._registers.heat_exchanger_active_.value
+    
+    @property
+    def heat_exchanger(self):
+        if self._registers.heat_exchanger_.value is None:
+            return 0
+        return self._registers.heat_exchanger_.value
+
+ 
     # @property
-    # def fan_modes(self):
-    #     """Return the fan setting."""
-    #     # if self._registers.saf_usermode_fs.value = None:
-    #     #     return 0
-    #     return FAN_MODES
+    # def heating(self):
+    #     if self._registers.oa_temperature_sensor.value is None:
+    #         return 0
+    #     return self._registers.oa_temperature_sensor.value / 10.0
+
+
+    @property
+    def heater_enabled(self):
+        if self._registers.heater_active_.value is None:
+            return 0
+        return self._registers.heater_active_.value
+
+    # @property
+    # def cooling_enabled(self):  
+    #     if self._registers.oa_temperature_sensor.value is None:
+    #         return 0
+    #     return self._registers.oa_temperature_sensor.value / 10.0
+
+
+    @property
+    def free_cooling_enabled(self): 
+        if self._registers.free_cooling_enabled.value is None:
+            return 0
+        return self._registers.free_cooling_enabled.value
+
+
+    @property
+    def free_cooling_active(self):
+        if self._registers.free_cooling_active.value is None:
+            return 0
+        return self._registers.free_cooling_active.value
+
+
+    @property
+    def free_cooling_start_time(self):
+        if self._registers.free_cooling_start_time_h.value is None or self._registers.free_cooling_start_time_m.value is None:
+            return 0
+        return f"{self._registers.free_cooling_start_time_h.value}:{self._registers.free_cooling_start_time_m.value}"
+
+    @property
+    def free_cooling_end_time(self): 
+        if self._registers.free_cooling_end_time_h.value is None or self._registers.free_cooling_end_time_m.value is None:
+            return 0
+        return f"{self._registers.free_cooling_end_time_h.value}:{self._registers.free_cooling_end_time_m.value}"
+
+    @property
+    def outdoor_air_temp(self):
+        if self._registers.oa_temperature_sensor.value is None:
+            return 0
+        return self._registers.oa_temperature_sensor.value / 10.0
+
 
     @property
     def target_temperature(self):

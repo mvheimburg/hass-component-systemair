@@ -9,8 +9,8 @@ from functools import partial
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
-
-from homeassistant.components.climate import PLATFORM_SCHEMA, ClimateEntity
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.components.climate import PLATFORM_SCHEMA, ClimateEntity, ClimateEntityDescription
 from homeassistant.components.climate.const import (
     # HVAC_MODE_COOL,
     # HVAC_MODE_HEAT,
@@ -34,7 +34,7 @@ from homeassistant.components.modbus.const import (
 
 from homeassistant.components.modbus import get_hub
 from homeassistant.components.modbus.base_platform import BasePlatform
-
+from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.const import (
     ATTR_TEMPERATURE,
     CONF_NAME,
@@ -43,7 +43,7 @@ from homeassistant.const import (
     PRECISION_TENTHS,
 )
 import homeassistant.helpers.config_validation as cv
-
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 
 from .const import *
@@ -53,7 +53,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
         vol.Optional(CONF_HUB, default=DEFAULT_HUB): cv.string,
         vol.Required(CONF_SLAVE): vol.All(int, vol.Range(min=0, max=32)),
-        vol.Optional(CONF_NAME, default=DEVICE_DEFAULT_NAME): cv.string,
+        vol.Optional(CONF_NAME, default=DOMAIN): cv.string,
     }
 )
 
@@ -61,21 +61,27 @@ _LOGGER = logging.getLogger(__name__)
 
 
 from .pysystemair.pysystemair import PySystemAir
+# from .pysystemair.const import USER_MODES
 
 
-async def async_setup_platform(
+# async def async_setup_platform(
+#     hass: HomeAssistant,
+#     config: ConfigType,
+#     async_add_entities,
+#     discovery_info: DiscoveryInfoType | None = None,
+# ):
+
+async def async_setup_entry(
     hass: HomeAssistant,
-    config: ConfigType,
-    async_add_entities,
-    discovery_info: DiscoveryInfoType | None = None,
-):
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
     """Set up the SystemAir Platform."""
-    modbus_slave = config.get(CONF_SLAVE)
-    name = config.get(CONF_NAME)
-    hub = get_hub(hass, config[CONF_HUB])
-    async_add_entities([SystemAir(hub, modbus_slave, name)], True)
-    
-
+    modbus_slave = entry.data[CONF_SLAVE]
+    name = entry.data[CONF_NAME]
+    hub = get_hub(hass, DEFAULT_HUB)
+    async_add_entities([SystemAir(hub, modbus_slave, name)], update_before_add=True)
+    # return True
 
 class SystemAir(ClimateEntity):
     """
@@ -85,35 +91,70 @@ class SystemAir(ClimateEntity):
     _attr_hvac_mode = HVACMode.FAN_ONLY
     _attr_max_temp = 25
     _attr_min_temp = 15
-    _attr_supported_features = ClimateEntityFeature.FAN_MODE | ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.TARGET_HUMIDITY
+    _attr_supported_features = ClimateEntityFeature.FAN_MODE | ClimateEntityFeature.TARGET_TEMPERATURE | ClimateEntityFeature.TARGET_HUMIDITY | ClimateEntityFeature.PRESET_MODE
     _attr_target_temperature_step = PRECISION_TENTHS
     _attr_temperature_unit = TEMP_CELSIUS
     _attr_fan_modes = [FAN_OFF, FAN_LOW, FAN_MEDIUM, FAN_HIGH, FAN_AUTO]
     _attr_fan_mode = FAN_MEDIUM
+    _attr_preset_modes = USER_MODES
+    _attr_preset_mode = USER_MODES[1]
 
     def __init__(self, hub: ModbusHub, modbus_slave: int | None, name: str | None) -> None:
         """Initialize the unit."""
         self._hub = hub
-        self._name = namedd
+        self._attr_name = name
         self._slave = modbus_slave
         self._unit = PySystemAir(
                      async_callback_holding_reg=partial(self._hub.async_pymodbus_call, unit=self._slave, value=1, use_call=CALL_TYPE_REGISTER_INPUT)
                     ,async_callback_input_reg=partial(self._hub.async_pymodbus_call, unit=self._slave, value=1, use_call=CALL_TYPE_REGISTER_HOLDING)
                     ,async_callback_write_reg=partial(self._hub.async_pymodbus_call, unit=self._slave, use_call=CALL_TYPE_WRITE_REGISTER))
-
-
-        _LOGGER.warning("SAVE VTR COMPONENT SETUP")
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN)},
+            name=self._attr_name,
+            manufacturer="SystemAir",
+        )
+        self._attr_extra_state_attributes={
+            "filter_hours":             0,
+            "filter_alarm":             0,
+            "heat_exchanger_active":    0,
+            "heat_exchanger":           0,
+            # "heating": 0,
+            "heater_enabled":           0,
+            "free_cooling_enabled":     0,
+            "free_cooling_active":      0,
+            "free_cooling_start_time":  0,
+            "free_cooling_end_time":    0,
+            "outdoor_air_temp":         0,
+        }
+        _LOGGER.warning("SYSTEMAIR SAVE VTR COMPONENT SETUP")
 
 
     async def async_update(self) -> None:
         """Get the latest data."""
         await self._unit.async_update_all()
         self._attr_current_temperature = self._unit.current_temperature
+        # _LOGGER.warning(f"self._attr_current_temperature: {self._attr_current_temperature}")
         self._attr_target_temperature = self._unit.target_temperature
         self._attr_current_humidity = self._unit.current_humidity
         self._attr_target_humidity = self._unit.target_humidity
+        # _LOGGER.warning(f"self._attr_target_humidity: {self._attr_target_humidity}")
         self._attr_fan_mode = SYSTEMAIR_TO_HASS_FAN_MODES[self._unit.fan_mode]
- 
+        # _LOGGER.warning(f"self._attr_fan_mode: {self._attr_fan_mode}")
+
+        self._attr_extra_state_attributes.update({
+            "filter_hours":             self._unit.filter_hours,
+            "filter_alarm":             self._unit.filter_alarm,
+            "heat_exchanger_active":    self._unit.heat_exchanger_active,
+            "heat_exchanger":           self._unit.heat_exchanger,
+            # "heating": 0,
+            "heater_enabled":           self._unit.heater_enabled,
+            "free_cooling_enabled":     self._unit.free_cooling_enabled,
+            "free_cooling_active":      self._unit.free_cooling_active,
+            "free_cooling_start_time":  self._unit.free_cooling_start_time,
+            "free_cooling_end_time":    self._unit.free_cooling_end_time,
+            "outdoor_air_temp":         self._unit.outdoor_air_temp,
+            })
+        # self._attr_available = True
 
     async def async_set_temperature(self, **kwargs):
         """Set new target temperature."""
