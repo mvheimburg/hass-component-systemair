@@ -5,9 +5,9 @@ description = ""
 authors = ["mvheimburg <Martin.Heimburg@sintef.no>"]
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.8"
 mypy = "^0.971"
-pysystemair = "^0.1.2"
+pysystemair = "^0.2.0"
 
 [tool.poetry.dev-dependencies]
 

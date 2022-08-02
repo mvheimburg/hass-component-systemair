@@ -79,11 +79,11 @@ cp2110 = ["hidapi"]
 
 [[package]]
 name = "pysystemair"
-version = "0.1.2"
+version = "0.2.0"
 description = "Python package to interface a SystamAir SAVE VTR ventilation through modbus. Heavily insipired by pyflexit (https://github.com/Sabesto/pyflexit). Made with the purpose of working with a home assistant component"
 category = "main"
 optional = false
-python-versions = ">=3.9,<4.0"
+python-versions = ">=3.8,<4.0"
 
 [package.dependencies]
 asyncio = ">=3.4.3,<4.0.0"
@@ -117,8 +117,8 @@ python-versions = ">=3.7"
 
 [metadata]
 lock-version = "1.1"
-python-versions = "^3.9"
-content-hash = "b698bc96a61c26e63db8bcf6fac7b7e7d59873817d1351a49adaaa33d21e7450"
+python-versions = "^3.8"
+content-hash = "d855dcf33006771eeca739338171109753753f8a675a2b93ff9f3dfef93892ef"
 
 [metadata.files]
 asyncio = []
