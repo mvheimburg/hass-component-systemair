@@ -3,7 +3,7 @@
   "name": "SystemAir",
   "config_flow": true,
   "documentation": "https://github.com/mvheimburg/hass-component-systemair",
-  "requirements": ["pysystemair", "pydantic", "python-box"],
+  "requirements": ["pysystemair"],
   "dependencies": ["modbus"],
   "codeowners": ["@mvheimburg"],
   "iot_class": "local_polling",
