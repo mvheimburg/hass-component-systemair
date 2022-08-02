@@ -60,7 +60,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 _LOGGER = logging.getLogger(__name__)
 
 
-from .pysystemair.pysystemair import PySystemAir
+from .pysystemair import PySystemAir, Callbacks
 # from .pysystemair.const import USER_MODES
 
 
@@ -104,10 +104,11 @@ class SystemAir(ClimateEntity):
         self._hub = hub
         self._attr_name = name
         self._slave = modbus_slave
-        self._unit = PySystemAir(
-                     async_callback_holding_reg=partial(self._hub.async_pymodbus_call, unit=self._slave, value=1, use_call=CALL_TYPE_REGISTER_INPUT)
-                    ,async_callback_input_reg=partial(self._hub.async_pymodbus_call, unit=self._slave, value=1, use_call=CALL_TYPE_REGISTER_HOLDING)
-                    ,async_callback_write_reg=partial(self._hub.async_pymodbus_call, unit=self._slave, use_call=CALL_TYPE_WRITE_REGISTER))
+        callbacks = Callbacks(
+                        holding_reg=partial(self._hub.async_pymodbus_call, unit=self._slave, value=1, use_call=CALL_TYPE_REGISTER_INPUT), 
+                        input_reg=partial(self._hub.async_pymodbus_call, unit=self._slave, value=1, use_call=CALL_TYPE_REGISTER_HOLDING), 
+                        write_reg=partial(self._hub.async_pymodbus_call, unit=self._slave, use_call=CALL_TYPE_WRITE_REGISTER))
+        self._unit = PySystemAir(callbacks=callbacks)
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN)},
             name=self._attr_name,
@@ -178,7 +179,7 @@ class SystemAir(ClimateEntity):
     async def async_set_fan_mode(self, fan_mode):
         """Set new fan mode."""
         # fan_value = self._fan_modes.index(fan_mode) + 1
-        _LOGGER.warning(f"Setting fan_value: {fan_value} with type: {type(fan_value)}")
+        _LOGGER.warning(f"Setting fan_mode: {fan_mode} with type: {type(fan_mode)}")
         await self._unit.async_set_fan_mode(HASS_TO_SYSTEMAIR_FAN_MODES[fan_mode])
         # if await self._hub.async_pymodbus_call(
         # unit=self._slave,
