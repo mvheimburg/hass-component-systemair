@@ -3,7 +3,7 @@
 # import datetime
 # import timedelta
 from typing import Final
-from .pysystemair import const as sysconst
+from pysystemair import const as sysconst
 
 from homeassistant.components.climate.const import (
     FAN_AUTO,

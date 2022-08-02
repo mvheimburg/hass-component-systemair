@@ -60,7 +60,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
 _LOGGER = logging.getLogger(__name__)
 
 
-from .pysystemair import PySystemAir, Callbacks
+from pysystemair import PySystemAir, Callbacks
 # from .pysystemair.const import USER_MODES
 
 
