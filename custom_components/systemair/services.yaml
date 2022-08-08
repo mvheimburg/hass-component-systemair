@@ -1,0 +1,26 @@
+set_cotwo_meas:
+  name: Set co2 measurment
+  description: "External co2 measurment for the ventilation"
+  # target:
+  #   entity:
+  #     integration: systemair
+  #     domain: climate
+  fields:
+    entity_id:
+      name: Entity
+      description: Ventilation unit
+      required: true
+      example: "climate.systemair"
+      selector:
+        entity:
+          integration: systemair
+          domain: climate
+    value:
+      name: CO2
+      description: "The CO2 value in ppm"
+      required: true
+      selector:
+        number:
+          min: 100
+          max: 2000
+          unit_of_measurement: "ppm"

@@ -3,7 +3,10 @@
 # import datetime
 # import timedelta
 from typing import Final
-from pysystemair import const as sysconst
+from pysystemair.const import (
+    FAN_MODES,
+    USER_MODES
+)
 
 from homeassistant.components.climate.const import (
     FAN_AUTO,
@@ -25,20 +28,22 @@ SLAVE_ADRESS = "slave address"
 UNIT_NAME = "unit name (for HA)"
 DOMAIN: Final = "systemair"
 
+SERVICE_SET_COTWO_MEAS="set_cotwo_meas"
+
 DEFAULT_TEMPERATURE = 20
 
 
 HASS_TO_SYSTEMAIR_FAN_MODES = {
-    FAN_OFF: sysconst.FAN_MODES.OFF,
-    FAN_LOW: sysconst.FAN_MODES.LOW,
-    FAN_MEDIUM: sysconst.FAN_MODES.NORMAL,
-    FAN_HIGH: sysconst.FAN_MODES.HIGH,
+    FAN_OFF: FAN_MODES.OFF,
+    FAN_LOW: FAN_MODES.LOW,
+    FAN_MEDIUM: FAN_MODES.NORMAL,
+    FAN_HIGH: FAN_MODES.HIGH,
 }
 SYSTEMAIR_TO_HASS_FAN_MODES = {
-    sysconst.FAN_MODES.OFF: FAN_OFF,
-    sysconst.FAN_MODES.LOW: FAN_LOW ,
-    sysconst.FAN_MODES.NORMAL: FAN_MEDIUM,
-    sysconst.FAN_MODES.HIGH: FAN_HIGH,
+    FAN_MODES.OFF: FAN_OFF,
+    FAN_MODES.LOW: FAN_LOW ,
+    FAN_MODES.NORMAL: FAN_MEDIUM,
+    FAN_MODES.HIGH: FAN_HIGH,
 }
 
 
@@ -70,10 +75,12 @@ SA_OPERATION_MODE_FIREPLACE = "fireplace"
 SA_OPERATION_MODE_HOLIDAY = "holiday"
 SA_OPERATION_MODE_IDLE = "idle"
 
-
-USER_MODES = list(sysconst.USER_MODES.values())
+FAN_MODES_=[FAN_OFF, FAN_LOW, FAN_MEDIUM, FAN_HIGH, FAN_AUTO]
+USER_MODES_ = list(USER_MODES.values())
 
 ATTR_HUMIDITY: Final = "humidity"
+ATTR_VALUE: Final = "value"
+ATTR_CO2_PPM: Final = "co2_ppm"
 
 
 
