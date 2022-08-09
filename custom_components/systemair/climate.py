@@ -47,8 +47,13 @@ import homeassistant.helpers.config_validation as cv
 # from homeassistant.helpers import entity_platform 
 from homeassistant.helpers.entity_platform import AddEntitiesCallback, async_get_current_platform
 
-
 from .const import *
+
+_LOGGER = logging.getLogger(__name__)
+
+from pysystemair import PySystemAir, Callbacks
+
+
 
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
@@ -59,16 +64,20 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     }
 )
 
-SET_COTWO_MEAS_SCHEMA=vol.Schema({
+SERVICES={
+"set_target_cotwo":vol.Schema({
                             vol.Required(ATTR_ENTITY_ID): cv.entity_id,
                             vol.Required(ATTR_VALUE): int,
+                        }),
+"set_cotwo_meas":vol.Schema({
+                            vol.Required(ATTR_ENTITY_ID): cv.entity_id,
+                            vol.Required(ATTR_VALUE): int,
+                        }),
+"set_free_cooling":vol.Schema({
+                            vol.Required(ATTR_ENTITY_ID): cv.entity_id,
+                            vol.Required(ATTR_FREE_COOLING_STATE): cv.boolean,
                         })
-
-_LOGGER = logging.getLogger(__name__)
-
-
-from pysystemair import PySystemAir, Callbacks
-
+}
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -83,16 +92,13 @@ async def async_setup_entry(
     unit = SystemAir(hub, modbus_slave, name)
 
     platform=async_get_current_platform()
-    # platform.async_register_entity_service(
-    #     name=SERVICE_SET_COTWO_MEAS,
-    #     func=f"async_{SERVICE_SET_COTWO_MEAS}",
-    #     schema=SET_COTWO_MEAS_SCHEMA,
-    # )
-    platform.async_register_entity_service(
-        name=SERVICE_SET_COTWO_MEAS,
-        func=f"async_{SERVICE_SET_COTWO_MEAS}",
-        schema=SET_COTWO_MEAS_SCHEMA,
-    )
+
+    for k,v in SERVICES.items():
+          platform.async_register_entity_service(
+            name=k,
+            func=f"async_{k}",
+            schema=v,
+        ) 
     async_add_entities([unit], update_before_add=True)
 
 
@@ -112,7 +118,7 @@ class SystemAir(ClimateEntity):
     _attr_fan_modes = FAN_MODES_
     _attr_fan_mode = FAN_MEDIUM
     _attr_preset_modes = USER_MODES_
-    _attr_preset_mode = USER_MODES_[1]
+    _attr_preset_mode = USER_MODES[1]
 
     def __init__(self, hub: ModbusHub, modbus_slave: int | None, name: str | None) -> None:
         """Initialize the unit."""
@@ -143,9 +149,11 @@ class SystemAir(ClimateEntity):
             "free_cooling_start_time":  0,
             "free_cooling_end_time":    0,
             "outdoor_air_temp":         0,
-            "target_co2_ppm":          0,
-            "feedback_co2_ppm":          0,
+            "target_co2_ppm":           0,
+            "feedback_co2_ppm":         0,
             "current_co2_ppm":          0,
+            "supply_air_speed":                0,
+            "extract_air_speed":                0,
         }
         _LOGGER.warning("SYSTEMAIR SAVE VTR COMPONENT SETUP")
 
@@ -160,6 +168,7 @@ class SystemAir(ClimateEntity):
         self._attr_target_humidity = self._unit.target_humidity
         # _LOGGER.warning(f"self._attr_target_humidity: {self._attr_target_humidity}")
         self._attr_fan_mode = SYSTEMAIR_TO_HASS_FAN_MODES[self._unit.fan_mode]
+        self._attr_preset_mode = USER_MODES[self._unit.user_mode]
         # _LOGGER.warning(f"self._attr_fan_mode: {self._attr_fan_mode}")
 
         self._attr_extra_state_attributes.update({
@@ -174,9 +183,11 @@ class SystemAir(ClimateEntity):
             "free_cooling_start_time":  self._unit.free_cooling_start_time,
             "free_cooling_end_time":    self._unit.free_cooling_end_time,
             "outdoor_air_temp":         self._unit.outdoor_air_temp,
-            "target_co2_ppm":          self._unit.target_co2_ppm,
+            "target_co2_ppm":           self._unit.target_co2_ppm,
             "feedback_co2_ppm":         self._unit.feedback_co2_ppm,
             "current_co2_ppm":          self._unit.current_co2_ppm,
+            "supply_air_speed":         self._unit.saf_speed,
+            "extract_air_speed":        self._unit.eaf_speed,
             })
         # self._attr_available = True
 
@@ -205,6 +216,12 @@ class SystemAir(ClimateEntity):
         await self._unit.async_set_fan_mode(HASS_TO_SYSTEMAIR_FAN_MODES[fan_mode])
 
 
+    async def async_set_preset_mode(self, preset_mode):
+        """Set new fan mode."""
+        _LOGGER.warning(f"Setting preset_mode: {preset_mode} with type: {type(preset_mode)}")
+        await self._unit.async_set_user_mode(preset_mode)
+
+
 
     async def async_set_humidity(self, humidity):
         """Set new target temperature."""
@@ -222,14 +239,20 @@ class SystemAir(ClimateEntity):
         # else:
         #      _LOGGER.error("Unable to set tempereatur to SystemAir modbus interface")
 
-
+    async def async_set_target_cotwo(self, value):
+        """Set new fan mode."""
+        _LOGGER.warning(f"async_set_target_cotwo: {value} with type: {type(value)}")
+        await self._unit.async_set_target_cotwo(value)
 
     async def async_set_cotwo_meas(self, value):
         """Set new fan mode."""
         _LOGGER.warning(f"Setting cotwo_meas: {value} with type: {type(value)}")
         await self._unit.async_set_cotwo_meas(value)
 
-
+    async def async_set_free_cooling(self, state):
+        """Set new fan mode."""
+        _LOGGER.warning(f"Setting async_set_free_cooling: {state} with type: {type(state)}")
+        await self._unit.async_set_free_cooling(state)
 
 # async def async_set_cotwo_meas(
 #     entity: SystemAir, service_call: ServiceCall

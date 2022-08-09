@@ -1,10 +1,6 @@
-set_cotwo_meas:
-  name: Set co2 measurment
-  description: "External co2 measurment for the ventilation"
-  # target:
-  #   entity:
-  #     integration: systemair
-  #     domain: climate
+set_target_cotwo:
+  name: Set co2 target value
+  description: "co2 target value for the ventilation"
   fields:
     entity_id:
       name: Entity
@@ -24,3 +20,47 @@ set_cotwo_meas:
           min: 100
           max: 2000
           unit_of_measurement: "ppm"
+
+set_cotwo_meas:
+  name: Set co2 measurment
+  description: "External co2 measurment for the ventilation"
+  fields:
+    entity_id:
+      name: Entity
+      description: Ventilation unit
+      required: true
+      example: "climate.systemair"
+      selector:
+        entity:
+          integration: systemair
+          domain: climate
+    value:
+      name: CO2
+      description: "The CO2 value in ppm"
+      required: true
+      selector:
+        number:
+          min: 100
+          max: 2000
+          unit_of_measurement: "ppm"
+
+
+set_free_cooling:
+  name: Enable/disable free cooling
+  description: "..."
+  fields:
+    entity_id:
+      name: Entity
+      description: Ventilation unit
+      required: true
+      example: "climate.systemair"
+      selector:
+        entity:
+          integration: systemair
+          domain: climate
+    state:
+      name: State
+      description: "Desired state"
+      required: true
+      selector:
+        boolean:
